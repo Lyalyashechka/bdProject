@@ -29,7 +29,8 @@ func main() {
 	validator := validator.New()
 	router.Validator = tools.NewCustomValidator(validator)
 	router.POST("user/:nickname/create", userHandler.SignUpUser)
-
+	router.GET("user/:nickname/profile", userHandler.GetUser)
+	router.POST("user/:nickname/profile", userHandler.UpdateUser)
 	if err := router.Start("127.0.0.1:5000"); err != nil {
 		log.Fatal(err)
 	}

@@ -38,3 +38,38 @@ func (handler *Handler) SignUpUser(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusCreated, users[0])
 }
+
+func (handler *Handler) GetUser(ctx echo.Context) error {
+	nickname := ctx.Param("nickname")
+	user, err := handler.UseCase.GetUserProfile(nickname)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, err)
+	}
+	return ctx.JSON(http.StatusOK, user)
+}
+
+func (handler *Handler) UpdateUser(ctx echo.Context) error {
+	var UserUpdate models.User
+
+	if err := ctx.Bind(&UserUpdate); err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	if err := ctx.Validate(&UserUpdate); err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+	UserUpdate.Nickname = ctx.Param("nickname")
+
+	user, err := handler.UseCase.UpdateUserProfile(UserUpdate)
+	if err != nil {
+		if err.Message == models.NoUser {
+			return ctx.JSON(http.StatusNotFound, err)
+		}
+		if err.Message == models.ConflictData {
+			return ctx.JSON(http.StatusConflict, err)
+		}
+		return ctx.JSON(http.StatusInternalServerError, err)
+	}
+
+	return ctx.JSON(http.StatusOK, user)
+}

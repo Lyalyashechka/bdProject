@@ -35,8 +35,20 @@ func (repository *Repository) GetUser(nickname string) (models.User, error) {
 	return result, nil
 }
 
-func (repository *Repository) UpdateUser(nickname string, update models.UserUpdate) (models.User, error) {
-	return models.User{}, nil
+func (repository *Repository) UpdateUser(user models.User) (models.User, error) {
+	query := repository.db.QueryRow("UPDATE users SET fullname=$1, about=$2, email=$3 "+
+		"where nickname=$4 returning nickname, fullname, about, email", user.FullName, user.About, user.Email, user.Nickname)
+
+	err := query.Scan(
+		&user.Nickname,
+		&user.FullName,
+		&user.About,
+		&user.Email)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }
 
 func (repository *Repository) GetUsersByNicknameOrEmail(nickname string, email string) ([]models.User, error) {

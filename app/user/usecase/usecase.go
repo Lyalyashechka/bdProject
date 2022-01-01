@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"database/sql"
 	"github.com/Lyalyashechka/bdProject/app/models"
 	"github.com/Lyalyashechka/bdProject/app/user"
 	"github.com/jackc/pgx"
@@ -31,10 +32,23 @@ func (uc *UseCase) CreateUser(user models.User) ([]models.User, error) {
 	return resultArray, err
 }
 
-func (uc *UseCase) GetUserProfile(nickname string) (models.User, error) {
-	return models.User{}, nil
+func (uc *UseCase) GetUserProfile(nickname string) (models.User, *models.CustomError) {
+	user, err := uc.Repository.GetUser(nickname)
+	if err == sql.ErrNoRows {
+		return models.User{}, &models.CustomError{Message: models.NoUser}
+	}
+	return user, nil
 }
 
-func (uc *UseCase) UpdateUserProfile(nickname string, update models.UserUpdate) (models.User, error) {
-	return models.User{}, nil
+func (uc *UseCase) UpdateUserProfile(user models.User) (models.User, *models.CustomError) {
+	userNew, err := uc.Repository.UpdateUser(user)
+	if err != nil {
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23505" {
+			return models.User{}, &models.CustomError{Message: models.ConflictData}
+		}
+		if err == sql.ErrNoRows {
+			return models.User{}, &models.CustomError{Message: models.NoUser}
+		}
+	}
+	return userNew, nil
 }
