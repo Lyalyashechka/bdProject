@@ -37,3 +37,48 @@ func (uc *UseCase) GetDetailsForum(slug string) (models.Forum, *models.CustomErr
 	}
 	return forum, nil
 }
+
+func (uc *UseCase) CreateThread (thread models.Thread) (models.Thread, *models.CustomError) {
+	thread, err := uc.Repository.AddThread(thread)
+	if err != nil {
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == models.PgxNoFoundFieldErrorCode {
+			return models.Thread{}, &models.CustomError{Message: models.NoUser}
+		}
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == models.PgxUniqErrorCode {
+			return models.Thread{}, &models.CustomError{Message: models.ConflictData}
+		}
+		return models.Thread{}, &models.CustomError{Message: err.Error()}
+	}
+
+	return thread, nil
+}
+
+func (uc *UseCase) GetUsersForum (slug string) ([]models.User, *models.CustomError) {
+	users, err := uc.Repository.GetUsersForum(slug)
+	if users == nil {
+		return nil, &models.CustomError{Message: models.NoSlug}
+	}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, &models.CustomError{Message: models.NoSlug}
+		}
+		return nil, &models.CustomError{Message: err.Error()}
+	}
+
+	return users, nil
+}
+
+func (uc *UseCase) GetForumThreads (slug string) ([]models.Thread, *models.CustomError) {
+	threads, err := uc.Repository.GetForumThreads(slug)
+	if threads == nil {
+		return nil, &models.CustomError{Message: models.NoSlug}
+	}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, &models.CustomError{Message: models.NoSlug}
+		}
+		return nil, &models.CustomError{Message: err.Error()}
+	}
+
+	return threads, nil
+}

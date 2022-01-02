@@ -37,7 +37,10 @@ func main() {
 	router.GET("user/:nickname/profile", userHandler.GetUser)
 	router.POST("user/:nickname/profile", userHandler.UpdateUser)
 	router.POST("forum/create", forumHandler.CreateForum)
-	router.GET("forum/:slug/details", forumHandler.GerForumDetails)
+	router.GET("forum/:slug/details", forumHandler.GetForumDetails)
+	router.POST("forum/:slug/create", forumHandler.CreateThread)
+	router.GET("forum/:slug/users", forumHandler.GetUsersForum)
+	router.GET("forum/:slug/threads", forumHandler.GetForumThreads)
 	if err := router.Start("127.0.0.1:5000"); err != nil {
 		log.Fatal(err)
 	}
