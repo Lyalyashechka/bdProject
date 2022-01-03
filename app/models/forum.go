@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Forum struct {
 	Title   string `json:"title" validate:"required"`
 	User    string `json:"user" validate:"required"`
@@ -15,6 +17,6 @@ type Thread struct {
 	Forum string `json:"forum"`
 	Message string `json:"message" validate:"required"`
 	Votes int32 `json:"votes"`
-	Slug  string `json:"slug"`
-	Created string `json:"created"`
+	Slug  string `json:"slug,omitempty"`
+	Created time.Time `json:"created"`
 }

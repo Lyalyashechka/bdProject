@@ -66,3 +66,29 @@ create trigger increment_counter_threads
     on thread
     for each row
 execute procedure increment_counter_threads();
+
+drop table if exists post;
+create table post(
+    id bigserial primary key,
+    parent bigint default 0,
+    author text,
+    message text,
+    isEdited boolean default false,
+    forum text,
+    thread int,
+    created timestamp with time zone default now(),
+    foreign key (author) references users(nickname),
+    foreign key (forum) references forum(slug),
+    foreign key (thread) references thread(id)
+);
+
+drop table if exists vote;
+create table vote (
+    id bigserial primary key,
+    nickname text,
+    voice int,
+    thread int not null,
+    foreign key (nickname) references users(nickname),
+    foreign key (thread) references thread(id),
+    unique (thread, nickname)
+);

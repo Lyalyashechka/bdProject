@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/Lyalyashechka/bdProject/app/models"
+	"github.com/Lyalyashechka/bdProject/app/tools"
 )
 
 type Repository struct {
@@ -14,8 +16,15 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 func (repository *Repository) AddForum(forum models.Forum) (models.Forum, error) {
-	_, err := repository.db.Exec("INSERT INTO Forum (title, \"user\", slug) VALUES ($1, $2, $3)",
+	row := repository.db.QueryRow("INSERT INTO Forum (title, \"user\", slug) VALUES ($1, " +
+		"COALESCE((SELECT nickname FROM users WHERE nickname = $2), $2), $3) returning " +
+		"title, \"user\", slug",
 		forum.Title, forum.User, forum.Slug)
+
+	err := row.Scan(
+		&forum.Title,
+		&forum.User,
+		&forum.Slug)
 	if err != nil {
 		return models.Forum{}, err
 	}
@@ -36,9 +45,11 @@ func (repository *Repository) GetDetailsForum(slug string) (models.Forum, error)
 }
 
 func (repository *Repository) AddThread(thread models.Thread) (models.Thread, error){
-	_, err := repository.db.Exec("INSERT INTO thread (title, author, forum, message, slug) " +
-		"VALUES ($1, $2, $3, $4, $5)",
-		thread.Title, thread.Author, thread.Forum, thread.Message, thread.Slug)
+	row := repository.db.QueryRow("INSERT INTO thread (title, author, forum, message, slug, created) " +
+		"VALUES ($1, $2, COALESCE((SELECT slug from forum where slug = $3), $3), $4, $5, $6) returning id, title, author, forum, message, slug, created",
+		thread.Title, thread.Author, thread.Forum, thread.Message, thread.Slug, thread.Created)
+
+	err := row.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Slug, &thread.Created)
 	if err != nil {
 		return models.Thread{}, err
 	}
@@ -71,9 +82,27 @@ func (repository *Repository) GetUsersForum(slug string)([]models.User, error) {
 	return users, nil
 }
 
-func (repository *Repository) GetForumThreads (slug string) ([]models.Thread, error) {
-	rows, err := repository.db.Query("select id, title, author, forum, message, votes, slug, created " +
-		"from thread where forum = $1", slug)
+func (repository *Repository) GetForumThreads (slug string, filter tools.Filter) ([]models.Thread, error) {
+	var rows *sql.Rows
+	var err error
+
+	if filter.Sort != tools.SortParamDefault && filter.Sort != tools.SortParamTrue {
+		return nil, errors.New("sql attack")
+	}
+
+	if filter.Since == "" {
+		rows, err = repository.db.Query("select id, title, author, forum, message, votes, slug, created " +
+			"from thread where forum = $1 order by created "+filter.Sort+" limit $2", slug, filter.Limit)
+	} else {
+		if filter.Sort == tools.SortParamTrue {
+			rows, err = repository.db.Query("select id, title, author, forum, message, votes, slug, created " +
+				"from thread where forum = $1 and created <= $3 order by created "+filter.Sort+" limit $2", slug, filter.Limit, filter.Since)
+		} else {
+			rows, err = repository.db.Query("select id, title, author, forum, message, votes, slug, created " +
+				"from thread where forum = $1 and created >= $3 order by created "+filter.Sort+" limit $2", slug, filter.Limit, filter.Since)
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -90,9 +119,18 @@ func (repository *Repository) GetForumThreads (slug string) ([]models.Thread, er
 		threads = append(threads, thread)
 	}
 
-	if rows.Err() != nil {
-		return nil, rows.Err()
+	return threads, nil
+}
+
+func (repository *Repository) GetForumBySlug (slug string) (models.Forum, error) {
+	var result models.Forum
+	row := repository.db.QueryRow("SELECT slug, title, \"user\" "+
+		"FROM forum WHERE slug=$1", slug)
+
+	err := row.Scan(&result.Slug, &result.Title, &result.User)
+	if err != nil {
+		return models.Forum{}, err
 	}
 
-	return threads, nil
+	return result, nil
 }

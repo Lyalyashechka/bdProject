@@ -49,6 +49,8 @@ func (uc *UseCase) UpdateUserProfile(user models.User) (models.User, *models.Cus
 		if err == sql.ErrNoRows {
 			return models.User{}, &models.CustomError{Message: models.NoUser}
 		}
+
+		return models.User{}, &models.CustomError{Message: err.Error()}
 	}
 	return userNew, nil
 }

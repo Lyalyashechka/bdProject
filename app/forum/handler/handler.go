@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/Lyalyashechka/bdProject/app/forum"
 	"github.com/Lyalyashechka/bdProject/app/models"
+	"github.com/Lyalyashechka/bdProject/app/tools"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -32,7 +33,7 @@ func (handler *Handler) CreateForum(ctx echo.Context) error {
 			return ctx.JSON(http.StatusNotFound, err)
 		}
 		if err.Message == models.ConflictData {
-			return ctx.JSON(http.StatusConflict, err)
+			return ctx.JSON(http.StatusConflict, forum)
 		}
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
@@ -67,7 +68,7 @@ func (handler *Handler) CreateThread (ctx echo.Context) error {
 			return ctx.JSON(http.StatusNotFound, err)
 		}
 		if err.Message == models.ConflictData {
-			return ctx.JSON(http.StatusConflict, err)
+			return ctx.JSON(http.StatusConflict, thread)
 		}
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
@@ -86,7 +87,8 @@ func (handler *Handler) GetUsersForum (ctx echo.Context) error {
 
 func (handler *Handler) GetForumThreads (ctx echo.Context) error {
 	slug := ctx.Param("slug")
-	users, err := handler.useCase.GetForumThreads(slug)
+	filter := tools.ParseQueryFilter(ctx)
+	users, err := handler.useCase.GetForumThreads(slug, filter)
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, err)
 	}

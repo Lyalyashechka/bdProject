@@ -4,25 +4,33 @@ import (
 	"database/sql"
 	"github.com/Lyalyashechka/bdProject/app/forum"
 	"github.com/Lyalyashechka/bdProject/app/models"
+	thread "github.com/Lyalyashechka/bdProject/app/thread"
+	"github.com/Lyalyashechka/bdProject/app/tools"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx"
 )
 
 type UseCase struct {
-	Repository forum.Repository
+	RepositoryForum forum.Repository
+	RepositoryThread thread.Repository
 }
 
-func NewUseCase(repository forum.Repository) *UseCase {
-	return &UseCase{Repository: repository}
+func NewUseCase(repositoryForum forum.Repository, repository thread.Repository) *UseCase {
+	return &UseCase{RepositoryForum: repositoryForum, RepositoryThread: repository}
 }
 
-func (uc *UseCase) CreateForum(forum models.Forum) (models.Forum, *models.CustomError) {
-	forum, err := uc.Repository.AddForum(forum)
+func (uc *UseCase) CreateForum(forumGet models.Forum) (models.Forum, *models.CustomError) {
+	forum, err := uc.RepositoryForum.AddForum(forumGet)
 	if err != nil {
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == models.PgxNoFoundFieldErrorCode {
 			return models.Forum{}, &models.CustomError{Message: models.NoUser}
 		}
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == models.PgxUniqErrorCode {
-			return models.Forum{}, &models.CustomError{Message: models.ConflictData}
+			forum, err = uc.RepositoryForum.GetForumBySlug(forumGet.Slug)
+			if err != nil {
+				return models.Forum{}, &models.CustomError{Message: err.Error()}
+			}
+			return forum, &models.CustomError{Message: models.ConflictData}
 		}
 		return models.Forum{}, &models.CustomError{Message: err.Error()}
 	}
@@ -31,30 +39,42 @@ func (uc *UseCase) CreateForum(forum models.Forum) (models.Forum, *models.Custom
 }
 
 func (uc *UseCase) GetDetailsForum(slug string) (models.Forum, *models.CustomError) {
-	forum, err := uc.Repository.GetDetailsForum(slug)
+	forum, err := uc.RepositoryForum.GetDetailsForum(slug)
 	if err == sql.ErrNoRows {
 		return models.Forum{}, &models.CustomError{Message: models.NoSlug}
 	}
 	return forum, nil
 }
 
-func (uc *UseCase) CreateThread (thread models.Thread) (models.Thread, *models.CustomError) {
-	thread, err := uc.Repository.AddThread(thread)
+func (uc *UseCase) CreateThread (threadGet models.Thread) (models.Thread, *models.CustomError) {
+	var randomSlug bool
+	if threadGet.Slug == "" {
+		randomSlug = true
+		threadGet.Slug = uuid.NewString()
+	}
+	thread, err := uc.RepositoryForum.AddThread(threadGet)
 	if err != nil {
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == models.PgxNoFoundFieldErrorCode {
 			return models.Thread{}, &models.CustomError{Message: models.NoUser}
 		}
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == models.PgxUniqErrorCode {
-			return models.Thread{}, &models.CustomError{Message: models.ConflictData}
+			thread, err = uc.RepositoryThread.GetThreadBySlug(threadGet.Slug)
+			if err != nil {
+				return models.Thread{}, &models.CustomError{Message: err.Error()}
+			}
+			return thread, &models.CustomError{Message: models.ConflictData}
 		}
 		return models.Thread{}, &models.CustomError{Message: err.Error()}
 	}
 
+	if randomSlug == true {
+		thread.Slug =""
+	}
 	return thread, nil
 }
 
 func (uc *UseCase) GetUsersForum (slug string) ([]models.User, *models.CustomError) {
-	users, err := uc.Repository.GetUsersForum(slug)
+	users, err := uc.RepositoryForum.GetUsersForum(slug)
 	if users == nil {
 		return nil, &models.CustomError{Message: models.NoSlug}
 	}
@@ -68,10 +88,14 @@ func (uc *UseCase) GetUsersForum (slug string) ([]models.User, *models.CustomErr
 	return users, nil
 }
 
-func (uc *UseCase) GetForumThreads (slug string) ([]models.Thread, *models.CustomError) {
-	threads, err := uc.Repository.GetForumThreads(slug)
+func (uc *UseCase) GetForumThreads (slug string, filter tools.Filter) ([]models.Thread, *models.CustomError) {
+	threads, err := uc.RepositoryForum.GetForumThreads(slug, filter)
 	if threads == nil {
-		return nil, &models.CustomError{Message: models.NoSlug}
+		_, err := uc.RepositoryForum.GetForumBySlug(slug)
+		if err != nil {
+			return nil, &models.CustomError{Message: err.Error()}
+		}
+		return []models.Thread{}, nil
 	}
 	if err != nil {
 		if err == sql.ErrNoRows {
