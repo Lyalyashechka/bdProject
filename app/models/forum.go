@@ -11,12 +11,17 @@ type Forum struct {
 }
 
 type Thread struct {
-	Id int32 `json:"id"`
-	Title string `json:"title" validate:"required"`
-	Author string `json:"author" validate:"required"`
-	Forum string `json:"forum"`
-	Message string `json:"message" validate:"required"`
-	Votes int32 `json:"votes"`
-	Slug  string `json:"slug,omitempty"`
+	Id      int32     `json:"id"`
+	Title   string    `json:"title" validate:"required"`
+	Author  string    `json:"author" validate:"required"`
+	Forum   string    `json:"forum"`
+	Message string    `json:"message" validate:"required"`
+	Votes   int32     `json:"votes"`
+	Slug    string    `json:"slug,omitempty"`
 	Created time.Time `json:"created"`
+}
+
+type Vote struct {
+	NickName string `json:"nickname"`
+	Voice    int    `json:"voice"`
 }

@@ -11,7 +11,7 @@ type Handler struct {
 	UseCase thread.UseCase
 }
 
-func NewHandler (usecase thread.UseCase) *Handler {
+func NewHandler(usecase thread.UseCase) *Handler {
 	return &Handler{UseCase: usecase}
 }
 
@@ -41,4 +41,30 @@ func (handler *Handler) CreatePosts(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, posts)
+}
+
+func (handler *Handler) Vote(ctx echo.Context) error {
+	var newVoice models.Vote
+
+	if err := ctx.Bind(&newVoice); err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+	slugOrId := ctx.Param("slug_or_id")
+
+	thread, err := handler.UseCase.CreateVote(slugOrId, newVoice)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, err)
+	}
+
+	return ctx.JSON(http.StatusOK, thread)
+}
+
+func (handler *Handler) Details(ctx echo.Context) error {
+	slugOrId := ctx.Param("slug_or_id")
+	thread, err := handler.UseCase.GetThreadDetails(slugOrId)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, err)
+	}
+
+	return ctx.JSON(http.StatusOK, thread)
 }

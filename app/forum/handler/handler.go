@@ -49,7 +49,7 @@ func (handler *Handler) GetForumDetails(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, forum)
 }
 
-func (handler *Handler) CreateThread (ctx echo.Context) error {
+func (handler *Handler) CreateThread(ctx echo.Context) error {
 	var newThread models.Thread
 
 	if err := ctx.Bind(&newThread); err != nil {
@@ -76,7 +76,7 @@ func (handler *Handler) CreateThread (ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, thread)
 }
 
-func (handler *Handler) GetUsersForum (ctx echo.Context) error {
+func (handler *Handler) GetUsersForum(ctx echo.Context) error {
 	slug := ctx.Param("slug")
 	users, err := handler.useCase.GetUsersForum(slug)
 	if err != nil {
@@ -85,7 +85,7 @@ func (handler *Handler) GetUsersForum (ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, users)
 }
 
-func (handler *Handler) GetForumThreads (ctx echo.Context) error {
+func (handler *Handler) GetForumThreads(ctx echo.Context) error {
 	slug := ctx.Param("slug")
 	filter := tools.ParseQueryFilter(ctx)
 	users, err := handler.useCase.GetForumThreads(slug, filter)

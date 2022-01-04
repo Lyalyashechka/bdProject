@@ -7,20 +7,20 @@ import (
 
 const (
 	NameLimitParam = "limit"
-	NameDescParam = "desc"
+	NameDescParam  = "desc"
 	NameSinceParam = "since"
 )
 
 const (
 	LimitParamDefault = 100
 	SinceParamDefault = ""
-	SortParamDefault = "asc"
-	SortParamTrue = "desc"
+	SortParamDefault  = "asc"
+	SortParamTrue     = "desc"
 )
 
 type Filter struct {
 	Limit int
-	Sort string
+	Sort  string
 	Since string
 }
 

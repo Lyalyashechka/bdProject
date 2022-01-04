@@ -12,11 +12,11 @@ type UseCase struct {
 	Repository thread.Repository
 }
 
-func NewUseCase (repository thread.Repository) *UseCase {
+func NewUseCase(repository thread.Repository) *UseCase {
 	return &UseCase{Repository: repository}
 }
 
-func (uc *UseCase)CreatePosts (slugOrId string, post []models.Post)([]models.Post, *models.CustomError) {
+func (uc *UseCase) CreatePosts(slugOrId string, post []models.Post) ([]models.Post, *models.CustomError) {
 	var thread models.Thread
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
@@ -59,4 +59,42 @@ func (uc *UseCase)CreatePosts (slugOrId string, post []models.Post)([]models.Pos
 	}
 
 	return posts, nil
+}
+
+func (uc *UseCase) CreateVote(slugOrId string, vote models.Vote) (models.Thread, *models.CustomError) {
+	var thread models.Thread
+	err := uc.Repository.CreateVoteBySlugOrId(slugOrId, vote)
+	if err != nil {
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23503" {
+			return models.Thread{}, &models.CustomError{Message: models.NoUser}
+		}
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23505" {
+			err = uc.Repository.UpdateVoteBySlugOrId(slugOrId, vote)
+			if err != nil {
+				return models.Thread{}, &models.CustomError{Message: err.Error()}
+			}
+			thread, err = uc.Repository.GetThreadBySlugOrId(slugOrId)
+			if err != nil {
+				return models.Thread{}, &models.CustomError{Message: err.Error()}
+			}
+
+			return thread, nil
+		}
+		return models.Thread{}, &models.CustomError{Message: err.Error()}
+	}
+
+	thread, err = uc.Repository.GetThreadBySlugOrId(slugOrId)
+	if err != nil {
+		return models.Thread{}, &models.CustomError{Message: err.Error()}
+	}
+
+	return thread, nil
+}
+
+func (uc *UseCase) GetThreadDetails(slugOrId string) (models.Thread, *models.CustomError) {
+	thread, err := uc.Repository.GetThreadBySlugOrId(slugOrId)
+	if err != nil {
+		return models.Thread{}, &models.CustomError{Message: err.Error()}
+	}
+	return thread, nil
 }

@@ -36,9 +36,9 @@ func (repository *Repository) GetUser(nickname string) (models.User, error) {
 }
 
 func (repository *Repository) UpdateUser(user models.User) (models.User, error) {
-	query := repository.db.QueryRow("UPDATE users SET " +
-		"fullname=COALESCE(NULLIF($1, ''), fullname), " +
-		"about=COALESCE(NULLIF($2, ''), about), " +
+	query := repository.db.QueryRow("UPDATE users SET "+
+		"fullname=COALESCE(NULLIF($1, ''), fullname), "+
+		"about=COALESCE(NULLIF($2, ''), about), "+
 		"email=COALESCE(NULLIF($3, ''), email) "+
 		"where nickname=$4 returning nickname, fullname, about, email", user.FullName, user.About, user.Email, user.Nickname)
 

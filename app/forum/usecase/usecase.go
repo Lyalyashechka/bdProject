@@ -11,7 +11,7 @@ import (
 )
 
 type UseCase struct {
-	RepositoryForum forum.Repository
+	RepositoryForum  forum.Repository
 	RepositoryThread thread.Repository
 }
 
@@ -46,7 +46,7 @@ func (uc *UseCase) GetDetailsForum(slug string) (models.Forum, *models.CustomErr
 	return forum, nil
 }
 
-func (uc *UseCase) CreateThread (threadGet models.Thread) (models.Thread, *models.CustomError) {
+func (uc *UseCase) CreateThread(threadGet models.Thread) (models.Thread, *models.CustomError) {
 	var randomSlug bool
 	if threadGet.Slug == "" {
 		randomSlug = true
@@ -68,12 +68,12 @@ func (uc *UseCase) CreateThread (threadGet models.Thread) (models.Thread, *model
 	}
 
 	if randomSlug == true {
-		thread.Slug =""
+		thread.Slug = ""
 	}
 	return thread, nil
 }
 
-func (uc *UseCase) GetUsersForum (slug string) ([]models.User, *models.CustomError) {
+func (uc *UseCase) GetUsersForum(slug string) ([]models.User, *models.CustomError) {
 	users, err := uc.RepositoryForum.GetUsersForum(slug)
 	if users == nil {
 		return nil, &models.CustomError{Message: models.NoSlug}
@@ -88,7 +88,7 @@ func (uc *UseCase) GetUsersForum (slug string) ([]models.User, *models.CustomErr
 	return users, nil
 }
 
-func (uc *UseCase) GetForumThreads (slug string, filter tools.Filter) ([]models.Thread, *models.CustomError) {
+func (uc *UseCase) GetForumThreads(slug string, filter tools.Filter) ([]models.Thread, *models.CustomError) {
 	threads, err := uc.RepositoryForum.GetForumThreads(slug, filter)
 	if threads == nil {
 		_, err := uc.RepositoryForum.GetForumBySlug(slug)

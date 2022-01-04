@@ -48,6 +48,8 @@ func main() {
 	router.GET("forum/:slug/users", forumHandler.GetUsersForum)
 	router.GET("forum/:slug/threads", forumHandler.GetForumThreads)
 	router.POST("thread/:slug_or_id/create", threadHandler.CreatePosts)
+	router.POST("thread/:slug_or_id/vote", threadHandler.Vote)
+	router.GET("thread/:slug_or_id/details", threadHandler.Details)
 	if err := router.Start("127.0.0.1:5000"); err != nil {
 		log.Fatal(err)
 	}
