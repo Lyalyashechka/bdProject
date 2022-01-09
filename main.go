@@ -67,7 +67,7 @@ func main() {
 
 func GetPostgres() (*sql.DB, error) {
 	dsn := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=disable",
-		"eugeniy", "forum_tp",
+		"eugeniy", "eugeniy",
 		"docker", "127.0.0.1",
 		"5432")
 	db, err := sql.Open("pgx", dsn)

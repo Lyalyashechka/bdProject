@@ -4,7 +4,7 @@ ADD . /app
 WORKDIR /app
 RUN go build ./main.go
 
-FROM ubuntu:20.10
+FROM ubuntu:20.04
 
 RUN apt-get -y update && apt-get install -y tzdata
 ENV TZ=Russia/Moscow
@@ -16,7 +16,7 @@ USER postgres
 
 RUN /etc/init.d/postgresql start &&\
     psql --command "CREATE USER eugeniy WITH SUPERUSER PASSWORD 'docker';" &&\
-    createdb -O forum_tp db &&\
+    createdb -O eugeniy db &&\
     /etc/init.d/postgresql stop
 
 EXPOSE 5432
