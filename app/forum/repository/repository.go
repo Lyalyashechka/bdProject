@@ -16,8 +16,8 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 func (repository *Repository) AddForum(forum models.Forum) (models.Forum, error) {
-	row := repository.db.QueryRow("INSERT INTO Forum (title, \"user\", slug) VALUES ($1, "+
-		"COALESCE((SELECT nickname FROM users WHERE nickname = $2), $2), $3) returning "+
+	row := repository.db.QueryRow("INSERT INTO forum (title, \"user\", slug) VALUES ($1, "+
+		"COALESCE((SELECT nickname FROM users WHERE nickname = $2), $2), $3) RETURNING "+
 		"title, \"user\", slug",
 		forum.Title, forum.User, forum.Slug)
 
@@ -46,20 +46,51 @@ func (repository *Repository) GetDetailsForum(slug string) (models.Forum, error)
 
 func (repository *Repository) AddThread(thread models.Thread) (models.Thread, error) {
 	row := repository.db.QueryRow("INSERT INTO thread (title, author, forum, message, slug, created) "+
-		"VALUES ($1, $2, COALESCE((SELECT slug from forum where slug = $3), $3), $4, $5, $6) returning id, title, author, forum, message, slug, created",
+		"VALUES ($1, $2, COALESCE((SELECT slug from forum where slug = $3), $3), $4, coalesce(nullif($5,'')), $6) " +
+		"returning id, title, author, forum, message, slug, created",
 		thread.Title, thread.Author, thread.Forum, thread.Message, thread.Slug, thread.Created)
 
-	err := row.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Slug, &thread.Created)
+	var nullSlug sql.NullString
+	err := row.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &nullSlug, &thread.Created)
 	if err != nil {
 		return models.Thread{}, err
 	}
-
+	thread.Slug = nullSlug.String
 	return thread, nil
 }
 
-func (repository *Repository) GetUsersForum(slug string) ([]models.User, error) {
-	rows, err := repository.db.Query("SELECT u.nickname, fullname, about, email "+
-		"FROM users_forum as u inner join users on u.nickname = users.nickname where u.slug = $1", slug)
+func (repository *Repository) GetUsersForum(slug string, filter tools.FilterUser) ([]models.User, error) {
+	var rows *sql.Rows
+	var err error
+	if filter.Since == tools.SinceParamDefault {
+		rows, err = repository.db.Query("SELECT u.nickname, fullname, about, email "+
+			"FROM users_forum as u inner join users on u.nickname = users.nickname where u.slug = $1 " +
+			"order by u.nickname COLLATE \"C\" " + filter.Desc + " limit $2",
+			slug,
+			filter.Limit,
+		)
+	} else {
+		if filter.Desc == tools.SortParamTrue {
+			rows, err = repository.db.Query("SELECT u.nickname, fullname, about, email "+
+				"FROM users_forum as u inner join users on u.nickname = users.nickname " +
+				"where u.slug = $1 and u.nickname < ($2 collate \"C\") " +
+				"order by u.nickname COLLATE \"C\" desc limit $3",
+				slug,
+				filter.Since,
+				filter.Limit,
+			)
+		} else {
+			rows, err = repository.db.Query("SELECT u.nickname, fullname, about, email "+
+				"FROM users_forum as u inner join users on u.nickname = users.nickname " +
+				"where u.slug = $1 and u.nickname > ($2 collate \"C\") " +
+				"order by u.nickname COLLATE \"C\" asc limit $3",
+				slug,
+				filter.Since,
+				filter.Limit,
+			)
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +113,7 @@ func (repository *Repository) GetUsersForum(slug string) ([]models.User, error) 
 	return users, nil
 }
 
-func (repository *Repository) GetForumThreads(slug string, filter tools.Filter) ([]models.Thread, error) {
+func (repository *Repository) GetForumThreads(slug string, filter tools.FilterThread) ([]models.Thread, error) {
 	var rows *sql.Rows
 	var err error
 
@@ -108,14 +139,16 @@ func (repository *Repository) GetForumThreads(slug string, filter tools.Filter) 
 	}
 	defer rows.Close()
 
+	var nullSlug sql.NullString
 	var threads []models.Thread
 	for rows.Next() {
 		var thread models.Thread
 		err = rows.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message,
-			&thread.Votes, &thread.Slug, &thread.Created)
+			&thread.Votes, &nullSlug, &thread.Created)
 		if err != nil {
 			return nil, err
 		}
+		thread.Slug = nullSlug.String
 		threads = append(threads, thread)
 	}
 
@@ -124,10 +157,10 @@ func (repository *Repository) GetForumThreads(slug string, filter tools.Filter) 
 
 func (repository *Repository) GetForumBySlug(slug string) (models.Forum, error) {
 	var result models.Forum
-	row := repository.db.QueryRow("SELECT slug, title, \"user\" "+
+	row := repository.db.QueryRow("SELECT slug, title, \"user\", posts, threads "+
 		"FROM forum WHERE slug=$1", slug)
 
-	err := row.Scan(&result.Slug, &result.Title, &result.User)
+	err := row.Scan(&result.Slug, &result.Title, &result.User, &result.Posts, &result.Threads)
 	if err != nil {
 		return models.Forum{}, err
 	}

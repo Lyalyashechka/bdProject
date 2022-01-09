@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/Lyalyashechka/bdProject/app/models"
 	"github.com/Lyalyashechka/bdProject/app/thread"
+	"github.com/Lyalyashechka/bdProject/app/tools"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -22,9 +23,6 @@ func (handler *Handler) CreatePosts(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, err.Error())
 	}
 	//ну а чего с этим делать
-	if len(newPosts) == 0 {
-		return ctx.JSON(http.StatusCreated, []models.Post{})
-	}
 	//if err := ctx.Validate(&newPosts); err != nil {
 	//	return ctx.JSON(http.StatusBadRequest, err.Error())
 	//}
@@ -35,6 +33,9 @@ func (handler *Handler) CreatePosts(ctx echo.Context) error {
 			return ctx.JSON(http.StatusNotFound, err)
 		}
 		if err.Message == models.ConflictData {
+			return ctx.JSON(http.StatusConflict, err)
+		}
+		if err.Message == models.BadParentPost {
 			return ctx.JSON(http.StatusConflict, err)
 		}
 		return ctx.JSON(http.StatusInternalServerError, err)
@@ -63,8 +64,64 @@ func (handler *Handler) Details(ctx echo.Context) error {
 	slugOrId := ctx.Param("slug_or_id")
 	thread, err := handler.UseCase.GetThreadDetails(slugOrId)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, err)
+		return ctx.JSON(http.StatusNotFound, err)
 	}
 
 	return ctx.JSON(http.StatusOK, thread)
+}
+
+func (handler *Handler) GetPosts (ctx echo.Context) error {
+	filter := tools.ParseQueryFilterPost(ctx)
+	slugOrId := ctx.Param("slug_or_id")
+
+	posts, err := handler.UseCase.GetPosts(slugOrId, filter)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, err)
+	}
+
+	return ctx.JSON(http.StatusOK, posts)
+}
+
+func (handler *Handler) UpdateThread (ctx echo.Context) error {
+	var newThread models.Thread
+
+	if err := ctx.Bind(&newThread); err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+	slugOrId := ctx.Param("slug_or_id")
+
+	thread, err := handler.UseCase.UpdateThread(slugOrId, newThread)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, err)
+	}
+
+	return ctx.JSON(http.StatusOK, thread)
+}
+
+func (handler *Handler) GetOnePost (ctx echo.Context) error {
+	id := ctx.Param("id")
+	filter := tools.ParseQueryFilterOnePost(ctx)
+
+	post, err := handler.UseCase.GetPost(id, filter)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, err)
+	}
+
+	return ctx.JSON(http.StatusOK, post)
+}
+
+func (handler *Handler) UpdatePost (ctx echo.Context) error {
+	var postInfo models.Post
+
+	if err := ctx.Bind(&postInfo); err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	id := ctx.Param("id")
+	post, err := handler.UseCase.UpdatePost(id, postInfo)
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, err)
+	}
+
+	return ctx.JSON(http.StatusOK, post)
 }

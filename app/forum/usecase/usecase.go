@@ -6,7 +6,6 @@ import (
 	"github.com/Lyalyashechka/bdProject/app/models"
 	thread "github.com/Lyalyashechka/bdProject/app/thread"
 	"github.com/Lyalyashechka/bdProject/app/tools"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx"
 )
 
@@ -50,7 +49,6 @@ func (uc *UseCase) CreateThread(threadGet models.Thread) (models.Thread, *models
 	var randomSlug bool
 	if threadGet.Slug == "" {
 		randomSlug = true
-		threadGet.Slug = uuid.NewString()
 	}
 	thread, err := uc.RepositoryForum.AddThread(threadGet)
 	if err != nil {
@@ -73,10 +71,14 @@ func (uc *UseCase) CreateThread(threadGet models.Thread) (models.Thread, *models
 	return thread, nil
 }
 
-func (uc *UseCase) GetUsersForum(slug string) ([]models.User, *models.CustomError) {
-	users, err := uc.RepositoryForum.GetUsersForum(slug)
+func (uc *UseCase) GetUsersForum(slug string, filter tools.FilterUser) ([]models.User, *models.CustomError) {
+	users, err := uc.RepositoryForum.GetUsersForum(slug, filter)
 	if users == nil {
-		return nil, &models.CustomError{Message: models.NoSlug}
+		_, err = uc.RepositoryForum.GetForumBySlug(slug)
+		if err != nil {
+			return nil, &models.CustomError{Message: models.NoSlug}
+		}
+		return []models.User{}, nil
 	}
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -88,7 +90,7 @@ func (uc *UseCase) GetUsersForum(slug string) ([]models.User, *models.CustomErro
 	return users, nil
 }
 
-func (uc *UseCase) GetForumThreads(slug string, filter tools.Filter) ([]models.Thread, *models.CustomError) {
+func (uc *UseCase) GetForumThreads(slug string, filter tools.FilterThread) ([]models.Thread, *models.CustomError) {
 	threads, err := uc.RepositoryForum.GetForumThreads(slug, filter)
 	if threads == nil {
 		_, err := uc.RepositoryForum.GetForumBySlug(slug)

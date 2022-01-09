@@ -5,8 +5,15 @@ type Post struct {
 	Parent   int64  `json:"parent"`
 	Author   string `json:"author" validate:"required"`
 	Message  string `json:"message" validate:"required"`
-	IsEdited bool   `json:"is_edited"`
+	IsEdited bool   `json:"isEdited"`
 	Forum    string `json:"forum"`
 	Thread   int32  `json:"thread"`
 	Created  string `json:"created"`
+}
+
+type PostInfo struct {
+	Post Post `json:"post"`
+	Author *User `json:"author,omitempty"`
+	Thread *Thread `json:"thread,omitempty"`
+	Forum *Forum `json:"forum,omitempty"`
 }

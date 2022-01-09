@@ -1,6 +1,9 @@
 package thread
 
-import "github.com/Lyalyashechka/bdProject/app/models"
+import (
+	"github.com/Lyalyashechka/bdProject/app/models"
+	"github.com/Lyalyashechka/bdProject/app/tools"
+)
 
 type Repository interface {
 	CreatePosts(threadId int, threadForum string, post []models.Post) ([]models.Post, error)
@@ -9,4 +12,10 @@ type Repository interface {
 	GetThreadBySlugOrId(slugOrId string) (models.Thread, error)
 	CreateVoteBySlugOrId(slugOrId string, vote models.Vote) error
 	UpdateVoteBySlugOrId(slugOrId string, vote models.Vote) error
+	GetPostById(id int)(models.Post, error)
+	UpdatePost(id int, post models.Post)(models.Post, error)
+	GetPostsFlatSlugOrId(slugOrId string, posts tools.FilterPosts)([]*models.Post, error)
+	GetPostsTreeSlugOrId(slugOrId string, posts tools.FilterPosts)([]*models.Post, error)
+	GetPostsParentTreeSlugOrId(slugOrId string, posts tools.FilterPosts)([]*models.Post, error)
+	UpdateThread(slugOrId string, thread models.Thread) (models.Thread, error)
 }

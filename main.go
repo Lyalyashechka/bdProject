@@ -6,6 +6,9 @@ import (
 	forumHandler "github.com/Lyalyashechka/bdProject/app/forum/handler"
 	forumRepository "github.com/Lyalyashechka/bdProject/app/forum/repository"
 	forumUC "github.com/Lyalyashechka/bdProject/app/forum/usecase"
+	serviceHandler "github.com/Lyalyashechka/bdProject/app/service/handler"
+	serviceRepository "github.com/Lyalyashechka/bdProject/app/service/repository"
+	serviceUC "github.com/Lyalyashechka/bdProject/app/service/usecase"
 	threadHandler "github.com/Lyalyashechka/bdProject/app/thread/handler"
 	threadRepository "github.com/Lyalyashechka/bdProject/app/thread/repository"
 	threadUC "github.com/Lyalyashechka/bdProject/app/thread/usecase"
@@ -34,7 +37,8 @@ func main() {
 	forumHandler := forumHandler.NewHandler(forumUC.NewUseCase(
 		forumRepository.NewRepository(db), threadRepository.NewRepository(db)))
 	threadHandler := threadHandler.NewHandler(threadUC.NewUseCase(
-		threadRepository.NewRepository(db)))
+		threadRepository.NewRepository(db), userRepository.NewRepository(db), forumRepository.NewRepository(db)))
+	serviceHandler := serviceHandler.NewHandler(serviceUC.NewUseCase(serviceRepository.NewRepository(db)))
 
 	validator := validator.New()
 	router.Validator = tools.NewCustomValidator(validator)
@@ -50,6 +54,12 @@ func main() {
 	router.POST("thread/:slug_or_id/create", threadHandler.CreatePosts)
 	router.POST("thread/:slug_or_id/vote", threadHandler.Vote)
 	router.GET("thread/:slug_or_id/details", threadHandler.Details)
+	router.GET("thread/:slug_or_id/posts", threadHandler.GetPosts)
+	router.POST("thread/:slug_or_id/details", threadHandler.UpdateThread)
+	router.GET("post/:id/details", threadHandler.GetOnePost)
+	router.POST("post/:id/details", threadHandler.UpdatePost)
+	router.GET("service/status", serviceHandler.Status)
+	router.POST("service/clear", serviceHandler.Clear)
 	if err := router.Start("127.0.0.1:5000"); err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +67,7 @@ func main() {
 
 func GetPostgres() (*sql.DB, error) {
 	dsn := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=disable",
-		"eugeniy", "postgres",
+		"eugeniy", "forum_tp",
 		"docker", "127.0.0.1",
 		"5432")
 	db, err := sql.Open("pgx", dsn)

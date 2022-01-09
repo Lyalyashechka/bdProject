@@ -37,15 +37,18 @@ func (handler *Handler) CreateForum(ctx echo.Context) error {
 		}
 		return ctx.JSON(http.StatusInternalServerError, err)
 	}
+
 	return ctx.JSON(http.StatusCreated, forum)
 }
 
 func (handler *Handler) GetForumDetails(ctx echo.Context) error {
 	slug := ctx.Param("slug")
+
 	forum, err := handler.useCase.GetDetailsForum(slug)
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, err)
 	}
+
 	return ctx.JSON(http.StatusOK, forum)
 }
 
@@ -78,19 +81,24 @@ func (handler *Handler) CreateThread(ctx echo.Context) error {
 
 func (handler *Handler) GetUsersForum(ctx echo.Context) error {
 	slug := ctx.Param("slug")
-	users, err := handler.useCase.GetUsersForum(slug)
+	filter := tools.ParseQueryFilterUser(ctx)
+
+	users, err := handler.useCase.GetUsersForum(slug, filter)
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, err)
 	}
+
 	return ctx.JSON(http.StatusOK, users)
 }
 
 func (handler *Handler) GetForumThreads(ctx echo.Context) error {
 	slug := ctx.Param("slug")
-	filter := tools.ParseQueryFilter(ctx)
+	filter := tools.ParseQueryFilterThread(ctx)
+
 	users, err := handler.useCase.GetForumThreads(slug, filter)
 	if err != nil {
 		return ctx.JSON(http.StatusNotFound, err)
 	}
+
 	return ctx.JSON(http.StatusOK, users)
 }
