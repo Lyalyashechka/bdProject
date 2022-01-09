@@ -16,7 +16,7 @@ USER postgres
 
 RUN /etc/init.d/postgresql start &&\
     psql --command "CREATE USER eugeniy WITH SUPERUSER PASSWORD 'docker';" &&\
-    createdb -O eugeniy db &&\
+    createdb -O eugeniy eugeniy &&\
     /etc/init.d/postgresql stop
 
 EXPOSE 5432
@@ -28,5 +28,5 @@ COPY . .
 COPY --from=build /app/main/ .
 
 EXPOSE 5000
-ENV PGPASSWORD 123
-CMD service postgresql start && psql -h localhost -d db -U eugeniy -p 5432 -a -q -f ./init.sql && ./main
+ENV PGPASSWORD docker
+CMD service postgresql start && psql -h localhost -d eugeniy -U eugeniy -p 5432 -a -q -f ./init.sql && ./main
