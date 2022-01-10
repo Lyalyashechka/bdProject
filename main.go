@@ -60,7 +60,7 @@ func main() {
 	router.POST("post/:id/details", threadHandler.UpdatePost)
 	router.GET("service/status", serviceHandler.Status)
 	router.POST("service/clear", serviceHandler.Clear)
-	if err := router.Start("127.0.0.1:5000"); err != nil {
+	if err := router.Start(":5000"); err != nil {
 		log.Fatal(err)
 	}
 }
