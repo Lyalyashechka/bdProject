@@ -174,18 +174,38 @@ CREATE TRIGGER after_insert_thread
     FOR EACH ROW
     EXECUTE PROCEDURE increment_counter_threads();
 
-create index if not exists users_nickname on users using hash(nickname);
-create index if not exists users_email on users using hash(email);
+CREATE INDEX IF NOT EXISTS users_nickname ON users USING hash (nickname);
+CREATE INDEX IF NOT EXISTS users_email ON users USING hash (email); -- +
+--create index if not exists users_nickname_email on users(nickname, email); --
 
-create index if not exists post_thread on post(thread);
-create index if not exists post_null_parent on post(id, thread) where parent = 0;
-create index if not exists post_thread_paths_asc on post(thread, paths);
-create index if not exists post_thread_path_path on post(thread, (paths[0]), paths);
-create index if not exists post_thread_created_id on post(thread, created, id);
+CREATE INDEX IF NOT EXISTS forum_slug ON forum USING hash (slug);
 
-create index if not exists forum_slug on forum using hash(slug);
 
-create index if not exists thread_forum on thread(forum);
-create index if not exists thread_forum_created on thread(forum, created);
-create unique index if not exists thread_slug on thread (slug);
+CREATE INDEX IF NOT EXISTS thread_slug ON thread USING hash (slug);
+CREATE INDEX IF NOT EXISTS thread_forum ON thread USING hash (forum);
+CREATE INDEX IF NOT EXISTS thread_created ON thread (created); --+
+CREATE INDEX IF NOT EXISTS thread_forum_created ON thread (forum, created); --+
+
+
+--CREATE INDEX IF NOT EXISTS post_id_path1 on post (id, (paths[1])); -- -
+CREATE INDEX IF NOT EXISTS post_path1 on post ((paths[1])); --+
+CREATE INDEX IF NOT EXISTS post_thread ON post (thread);
+
+--CREATE INDEX IF NOT EXISTS post_thread_id on post (thread, id);
+
+CREATE INDEX IF NOT EXISTS post_thread_path_id on post (thread, paths, id);
+create index if not exists post_thread_parent_path1 on post (thread, parent, (paths[1])); --+
+CREATE INDEX IF NOT EXISTS post_thread_id_path1_parent on post (thread, id, (paths[1]), parent);
+--CREATE INDEX IF NOT EXISTS post_path1_path_id ON post ((paths[1]) DESC, paths, id);
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS votes_nickname_thread_nickname_unique on vote (thread, nickname);
+
+create index if not exists users_forum_nickname_slug on users_forum(nickname, slug);
+create index if not exists users_forum_nickname on users_forum(nickname);
+create index if not exists users_forum_slug on users_forum(slug);
+
+
+
+
 

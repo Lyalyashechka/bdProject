@@ -78,6 +78,6 @@ func GetPostgres() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(100)
 	return db, nil
 }
