@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"database/sql"
 	"github.com/Lyalyashechka/bdProject/app/forum"
 	"github.com/Lyalyashechka/bdProject/app/models"
 	"github.com/Lyalyashechka/bdProject/app/thread"
@@ -12,8 +11,8 @@ import (
 )
 
 type UseCase struct {
-	Repository thread.Repository
-	RepositoryUser user.Repository
+	Repository      thread.Repository
+	RepositoryUser  user.Repository
 	RepositoryForum forum.Repository
 }
 
@@ -31,8 +30,7 @@ func (uc *UseCase) CreatePosts(slugOrId string, post []models.Post) ([]models.Po
 				return nil, &models.CustomError{Message: models.ConflictData}
 			}
 
-
-			if err == sql.ErrNoRows {
+			if err == pgx.ErrNoRows {
 				return nil, &models.CustomError{Message: models.NoUser}
 			}
 
@@ -46,7 +44,7 @@ func (uc *UseCase) CreatePosts(slugOrId string, post []models.Post) ([]models.Po
 				return nil, &models.CustomError{Message: models.ConflictData}
 			}
 
-			if err == sql.ErrNoRows {
+			if err == pgx.ErrNoRows {
 				return nil, &models.CustomError{Message: models.NoUser}
 			}
 
@@ -108,7 +106,7 @@ func (uc *UseCase) GetThreadDetails(slugOrId string) (models.Thread, *models.Cus
 	return thread, nil
 }
 
-func (uc *UseCase) GetPosts(slugOrId string, filter tools.FilterPosts)([]*models.Post, *models.CustomError) {
+func (uc *UseCase) GetPosts(slugOrId string, filter tools.FilterPosts) ([]*models.Post, *models.CustomError) {
 	var result []*models.Post
 	var err error
 
@@ -141,7 +139,7 @@ func (uc *UseCase) UpdateThread(slugOrId string, thread models.Thread) (models.T
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23505" {
 			return models.Thread{}, &models.CustomError{Message: models.ConflictData}
 		}
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return models.Thread{}, &models.CustomError{Message: models.NoUser}
 		}
 
@@ -150,7 +148,7 @@ func (uc *UseCase) UpdateThread(slugOrId string, thread models.Thread) (models.T
 	return thread, nil
 }
 
-func (uc *UseCase) GetPost(id string, filter tools.FilterOnePost)(models.PostInfo, *models.CustomError) {
+func (uc *UseCase) GetPost(id string, filter tools.FilterOnePost) (models.PostInfo, *models.CustomError) {
 	var result models.PostInfo
 
 	idNum, err := strconv.Atoi(id)

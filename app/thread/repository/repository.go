@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"github.com/Lyalyashechka/bdProject/app/models"
 	"github.com/Lyalyashechka/bdProject/app/tools"
+	"github.com/jackc/pgx"
 	"strconv"
 	"strings"
 )
 
 type Repository struct {
-	db *sql.DB
+	db *pgx.ConnPool
 }
 
-func NewRepository(db *sql.DB) *Repository {
+func NewRepository(db *pgx.ConnPool) *Repository {
 	return &Repository{db: db}
 }
 
@@ -155,7 +156,7 @@ func (repository *Repository) GetThreadBySlugOrId(slugOrId string) (models.Threa
 	var result models.Thread
 	//row := repository.db.QueryRow("SELECT id, title, author, forum, message, votes, slug, created "+
 	//	"FROM thread WHERE slug=$1 or id=(null || $1)::integer", slugOrId)
-	var row *sql.Row
+	var row *pgx.Row
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
 		row = repository.db.QueryRow("SELECT id, title, author, forum, message, votes, slug, created "+
@@ -175,7 +176,7 @@ func (repository *Repository) GetThreadBySlugOrId(slugOrId string) (models.Threa
 }
 
 func (repository *Repository) GetPostsFlatSlugOrId(slugOrId string, filter tools.FilterPosts) ([]*models.Post, error) {
-	var rows *sql.Rows
+	var rows *pgx.Rows
 	var err error
 	// ._.
 	id, err := strconv.Atoi(slugOrId)
@@ -257,7 +258,7 @@ func (repository *Repository) GetPostsFlatSlugOrId(slugOrId string, filter tools
 }
 
 func (repository *Repository) GetPostsTreeSlugOrId(slugOrId string, filter tools.FilterPosts) ([]*models.Post, error) {
-	var rows *sql.Rows
+	var rows *pgx.Rows
 	var err error
 	// ._.
 	id, err := strconv.Atoi(slugOrId)
@@ -345,7 +346,7 @@ func (repository *Repository) GetPostsTreeSlugOrId(slugOrId string, filter tools
 }
 
 func (repository *Repository) GetPostsParentTreeSlugOrId(slugOrId string, filter tools.FilterPosts) ([]*models.Post, error) {
-	var rows *sql.Rows
+	var rows *pgx.Rows
 	var err error
 	// ._.
 	id, err := strconv.Atoi(slugOrId)
@@ -463,7 +464,7 @@ func (repository *Repository) GetPostsParentTreeSlugOrId(slugOrId string, filter
 }
 
 func (repository *Repository) UpdateThread(slugOrId string, thread models.Thread) (models.Thread, error) {
-	var row *sql.Row
+	var row *pgx.Row
 	var err error
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {

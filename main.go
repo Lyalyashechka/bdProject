@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	forumHandler "github.com/Lyalyashechka/bdProject/app/forum/handler"
 	forumRepository "github.com/Lyalyashechka/bdProject/app/forum/repository"
@@ -17,6 +16,7 @@ import (
 	userRepository "github.com/Lyalyashechka/bdProject/app/user/repository"
 	userUC "github.com/Lyalyashechka/bdProject/app/user/usecase"
 	validator "github.com/go-playground/validator"
+	"github.com/jackc/pgx"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/labstack/echo/v4"
 	"log"
@@ -65,19 +65,24 @@ func main() {
 	}
 }
 
-func GetPostgres() (*sql.DB, error) {
+func GetPostgres() (*pgx.ConnPool, error) {
 	dsn := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s sslmode=disable",
 		"eugeniy", "eugeniy",
 		"docker", "127.0.0.1",
 		"5432")
-	db, err := sql.Open("pgx", dsn)
+	db, err := pgx.ParseConnectionString(dsn)
 	if err != nil {
 		return nil, err
 	}
-	err = db.Ping()
+	pool, err := pgx.NewConnPool(pgx.ConnPoolConfig{
+		ConnConfig:     db,
+		MaxConnections: 100,
+		AfterConnect:   nil,
+		AcquireTimeout: 0,
+	})
 	if err != nil {
-		return nil, err
+		log.Fatalf("Error %s occurred during connection to database", err)
 	}
-	db.SetMaxOpenConns(100)
-	return db, nil
+
+	return pool, nil
 }

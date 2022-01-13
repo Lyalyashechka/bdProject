@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"database/sql"
 	"github.com/Lyalyashechka/bdProject/app/forum"
 	"github.com/Lyalyashechka/bdProject/app/models"
 	thread "github.com/Lyalyashechka/bdProject/app/thread"
@@ -39,7 +38,7 @@ func (uc *UseCase) CreateForum(forumGet models.Forum) (models.Forum, *models.Cus
 
 func (uc *UseCase) GetDetailsForum(slug string) (models.Forum, *models.CustomError) {
 	forum, err := uc.RepositoryForum.GetDetailsForum(slug)
-	if err == sql.ErrNoRows {
+	if err == pgx.ErrNoRows {
 		return models.Forum{}, &models.CustomError{Message: models.NoSlug}
 	}
 	return forum, nil
@@ -81,7 +80,7 @@ func (uc *UseCase) GetUsersForum(slug string, filter tools.FilterUser) ([]models
 		return []models.User{}, nil
 	}
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return nil, &models.CustomError{Message: models.NoSlug}
 		}
 		return nil, &models.CustomError{Message: err.Error()}
@@ -100,7 +99,7 @@ func (uc *UseCase) GetForumThreads(slug string, filter tools.FilterThread) ([]mo
 		return []models.Thread{}, nil
 	}
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return nil, &models.CustomError{Message: models.NoSlug}
 		}
 		return nil, &models.CustomError{Message: err.Error()}

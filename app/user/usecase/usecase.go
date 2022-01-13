@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"database/sql"
 	"github.com/Lyalyashechka/bdProject/app/models"
 	"github.com/Lyalyashechka/bdProject/app/user"
 	"github.com/jackc/pgx"
@@ -34,7 +33,7 @@ func (uc *UseCase) CreateUser(user models.User) ([]models.User, error) {
 
 func (uc *UseCase) GetUserProfile(nickname string) (models.User, *models.CustomError) {
 	user, err := uc.Repository.GetUser(nickname)
-	if err == sql.ErrNoRows {
+	if err == pgx.ErrNoRows {
 		return models.User{}, &models.CustomError{Message: models.NoUser}
 	}
 	return user, nil
@@ -46,7 +45,7 @@ func (uc *UseCase) UpdateUserProfile(user models.User) (models.User, *models.Cus
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23505" {
 			return models.User{}, &models.CustomError{Message: models.ConflictData}
 		}
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return models.User{}, &models.CustomError{Message: models.NoUser}
 		}
 

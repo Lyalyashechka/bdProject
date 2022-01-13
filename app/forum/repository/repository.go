@@ -5,13 +5,14 @@ import (
 	"errors"
 	"github.com/Lyalyashechka/bdProject/app/models"
 	"github.com/Lyalyashechka/bdProject/app/tools"
+	"github.com/jackc/pgx"
 )
 
 type Repository struct {
-	db *sql.DB
+	db *pgx.ConnPool
 }
 
-func NewRepository(db *sql.DB) *Repository {
+func NewRepository(db *pgx.ConnPool) *Repository {
 	return &Repository{db: db}
 }
 
@@ -46,7 +47,7 @@ func (repository *Repository) GetDetailsForum(slug string) (models.Forum, error)
 
 func (repository *Repository) AddThread(thread models.Thread) (models.Thread, error) {
 	row := repository.db.QueryRow("INSERT INTO thread (title, author, forum, message, slug, created) "+
-		"VALUES ($1, $2, COALESCE((SELECT slug from forum where slug = $3), $3), $4, coalesce(nullif($5,'')), $6) " +
+		"VALUES ($1, $2, COALESCE((SELECT slug from forum where slug = $3), $3), $4, coalesce(nullif($5,'')), $6) "+
 		"returning id, title, author, forum, message, slug, created",
 		thread.Title, thread.Author, thread.Forum, thread.Message, thread.Slug, thread.Created)
 
@@ -60,20 +61,20 @@ func (repository *Repository) AddThread(thread models.Thread) (models.Thread, er
 }
 
 func (repository *Repository) GetUsersForum(slug string, filter tools.FilterUser) ([]models.User, error) {
-	var rows *sql.Rows
+	var rows *pgx.Rows
 	var err error
 	if filter.Since == tools.SinceParamDefault {
 		rows, err = repository.db.Query("SELECT u.nickname, fullname, about, email "+
-			"FROM users_forum as u inner join users on u.nickname = users.nickname where u.slug = $1 " +
-			"order by u.nickname COLLATE \"C\" " + filter.Desc + " limit $2",
+			"FROM users_forum as u inner join users on u.nickname = users.nickname where u.slug = $1 "+
+			"order by u.nickname COLLATE \"C\" "+filter.Desc+" limit $2",
 			slug,
 			filter.Limit,
 		)
 	} else {
 		if filter.Desc == tools.SortParamTrue {
 			rows, err = repository.db.Query("SELECT u.nickname, fullname, about, email "+
-				"FROM users_forum as u inner join users on u.nickname = users.nickname " +
-				"where u.slug = $1 and u.nickname < ($2 collate \"C\") " +
+				"FROM users_forum as u inner join users on u.nickname = users.nickname "+
+				"where u.slug = $1 and u.nickname < ($2 collate \"C\") "+
 				"order by u.nickname COLLATE \"C\" desc limit $3",
 				slug,
 				filter.Since,
@@ -81,8 +82,8 @@ func (repository *Repository) GetUsersForum(slug string, filter tools.FilterUser
 			)
 		} else {
 			rows, err = repository.db.Query("SELECT u.nickname, fullname, about, email "+
-				"FROM users_forum as u inner join users on u.nickname = users.nickname " +
-				"where u.slug = $1 and u.nickname > ($2 collate \"C\") " +
+				"FROM users_forum as u inner join users on u.nickname = users.nickname "+
+				"where u.slug = $1 and u.nickname > ($2 collate \"C\") "+
 				"order by u.nickname COLLATE \"C\" asc limit $3",
 				slug,
 				filter.Since,
@@ -114,7 +115,7 @@ func (repository *Repository) GetUsersForum(slug string, filter tools.FilterUser
 }
 
 func (repository *Repository) GetForumThreads(slug string, filter tools.FilterThread) ([]models.Thread, error) {
-	var rows *sql.Rows
+	var rows *pgx.Rows
 	var err error
 
 	if filter.Sort != tools.SortParamDefault && filter.Sort != tools.SortParamTrue {

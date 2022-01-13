@@ -1,15 +1,15 @@
 package repository
 
 import (
-	"database/sql"
 	"github.com/Lyalyashechka/bdProject/app/models"
+	"github.com/jackc/pgx"
 )
 
 type Repository struct {
-	db *sql.DB
+	db *pgx.ConnPool
 }
 
-func NewRepository(db *sql.DB) *Repository {
+func NewRepository(db *pgx.ConnPool) *Repository {
 	return &Repository{db: db}
 }
 
