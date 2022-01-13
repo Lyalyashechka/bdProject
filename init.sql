@@ -185,7 +185,7 @@ CREATE INDEX IF NOT EXISTS thread_created ON thread (created);
 CREATE INDEX IF NOT EXISTS thread_forum_created ON thread (forum, created);
 
 
-CREATE INDEX IF NOT EXISTS post_id_path1 on post (id, (paths[1]));
+--CREATE INDEX IF NOT EXISTS post_id_path1 on post (id, (paths[1]));
 CREATE INDEX IF NOT EXISTS post_path1 on post ((paths[1]));
 CREATE INDEX IF NOT EXISTS post_thread ON post (thread);
 CREATE INDEX IF NOT EXISTS post_thread_id on post (thread, id);
