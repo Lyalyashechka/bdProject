@@ -174,31 +174,34 @@ func (repository *Repository) GetThreadBySlugOrId(slugOrId string) (models.Threa
 	return result, nil
 }
 
-func (repository *Repository)GetPostsFlatSlugOrId(slugOrId string, filter tools.FilterPosts)([]*models.Post, error) {
+func (repository *Repository) GetPostsFlatSlugOrId(slugOrId string, filter tools.FilterPosts) ([]*models.Post, error) {
 	var rows *sql.Rows
 	var err error
 	// ._.
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
+		var tmpId sql.NullInt64
+		row := repository.db.QueryRow("select id from thread where slug = $1", slugOrId)
+		err = row.Scan(&tmpId)
 		if filter.Since == tools.SinceParamDefault {
 			rows, err = repository.db.Query(`
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
-											thread = (select id from thread where slug = $1) 
-											order by id ` + filter.Desc + ` limit $2`, slugOrId, filter.Limit)
+											thread = $1 
+											order by id `+filter.Desc+` limit $2`, tmpId, filter.Limit)
 		} else {
 			if filter.Desc == tools.SortParamTrue {
 				rows, err = repository.db.Query(`
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
-											thread = (select id from thread where slug = $1) and id < $2 
-											order by id desc limit $3`, slugOrId, filter.Since, filter.Limit)
+											thread = $1 and id < $2 
+											order by id desc limit $3`, tmpId, filter.Since, filter.Limit)
 			} else {
 				rows, err = repository.db.Query(`
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
-											thread = (select id from thread where slug = $1) and id > $2 
-											order by id asc limit $3`, slugOrId, filter.Since, filter.Limit)
+											thread = $1 and id > $2 
+											order by id asc limit $3`, tmpId, filter.Since, filter.Limit)
 			}
 		}
 	} else {
@@ -207,7 +210,7 @@ func (repository *Repository)GetPostsFlatSlugOrId(slugOrId string, filter tools.
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
 											thread = $1 
-											order by id ` + filter.Desc + ` limit $2`, id, filter.Limit)
+											order by id `+filter.Desc+` limit $2`, id, filter.Limit)
 		} else {
 			if filter.Desc == tools.SortParamTrue {
 				rows, err = repository.db.Query(`
@@ -253,18 +256,21 @@ func (repository *Repository)GetPostsFlatSlugOrId(slugOrId string, filter tools.
 	return result, err
 }
 
-func (repository *Repository)GetPostsTreeSlugOrId(slugOrId string, filter tools.FilterPosts)([]*models.Post, error) {
+func (repository *Repository) GetPostsTreeSlugOrId(slugOrId string, filter tools.FilterPosts) ([]*models.Post, error) {
 	var rows *sql.Rows
 	var err error
 	// ._.
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
+		var tmpId sql.NullInt64
+		row := repository.db.QueryRow("select id from thread where slug = $1", slugOrId)
+		err = row.Scan(&tmpId)
 		if filter.Since == tools.SinceParamDefault {
 			rows, err = repository.db.Query(`
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
-											thread = (select id from thread where slug = $1) 
-											order by paths ` + filter.Desc + `, id ` + filter.Desc + ` limit $2`, slugOrId, filter.Limit)
+											thread = $1 
+											order by paths `+filter.Desc+`, id `+filter.Desc+` limit $2`, tmpId, filter.Limit)
 		} else {
 			if filter.Desc == tools.SortParamTrue {
 				//rows, err = repository.db.Query(`
@@ -275,15 +281,15 @@ func (repository *Repository)GetPostsTreeSlugOrId(slugOrId string, filter tools.
 				rows, err = repository.db.Query(`
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
-											thread = (select id from thread where slug = $1) and paths < (select paths from post where id=$2) 
-											order by paths desc, id desc limit $3`, slugOrId, filter.Since, filter.Limit)
+											thread = $1 and paths < (select paths from post where id=$2) 
+											order by paths desc, id desc limit $3`, tmpId, filter.Since, filter.Limit)
 
 			} else {
 				rows, err = repository.db.Query(`
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
-											thread = (select id from thread where slug = $1) and paths > (select paths from post where id=$2) 
-											order by paths asc, id asc limit $3`, slugOrId, filter.Since, filter.Limit)
+											thread = $1 and paths > (select paths from post where id=$2) 
+											order by paths asc, id asc limit $3`, tmpId, filter.Since, filter.Limit)
 			}
 		}
 	} else {
@@ -292,7 +298,7 @@ func (repository *Repository)GetPostsTreeSlugOrId(slugOrId string, filter tools.
 											select id, parent, author, message, isEdited, forum,  
 											thread, created from post where 
 											thread = $1 
-											order by paths ` + filter.Desc + `, id ` + filter.Desc + ` limit $2`, id, filter.Limit)
+											order by paths `+filter.Desc+`, id `+filter.Desc+` limit $2`, id, filter.Limit)
 		} else {
 			if filter.Desc == tools.SortParamTrue {
 				rows, err = repository.db.Query(`
@@ -338,49 +344,52 @@ func (repository *Repository)GetPostsTreeSlugOrId(slugOrId string, filter tools.
 	return result, err
 }
 
-func (repository *Repository)GetPostsParentTreeSlugOrId(slugOrId string, filter tools.FilterPosts)([]*models.Post, error) {
+func (repository *Repository) GetPostsParentTreeSlugOrId(slugOrId string, filter tools.FilterPosts) ([]*models.Post, error) {
 	var rows *sql.Rows
 	var err error
 	// ._.
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
+		var tmpId sql.NullInt64
+		row := repository.db.QueryRow("select id from thread where slug = $1", slugOrId)
+		err = row.Scan(&tmpId)
 		if filter.Since == tools.SinceParamDefault {
 			if filter.Desc == tools.SortParamTrue {
 				rows, err = repository.db.Query(`
 					SELECT id, parent, author, message, isEdited, forum, thread, created FROM post
-					WHERE paths[1] IN (SELECT id FROM post WHERE thread = (SELECT id from thread where slug = $1) 
+					WHERE paths[1] IN (SELECT id FROM post WHERE thread = $1 
 					AND parent = 0 ORDER BY id DESC LIMIT $2)
 					ORDER BY paths[1] DESC, paths ASC, id ASC;`,
-					slugOrId,
+					tmpId,
 					filter.Limit)
 			} else {
 				rows, err = repository.db.Query(`
 					SELECT id, parent, author, message, isEdited, forum, thread, created FROM post
-					WHERE paths[1] IN (SELECT id FROM post WHERE thread = (SELECT id from thread where slug = $1) 
+					WHERE paths[1] IN (SELECT id FROM post WHERE thread = $1 
 					AND parent = 0 ORDER BY id ASC LIMIT $2)
 					ORDER BY paths ASC, id ASC;`,
-					slugOrId,
+					tmpId,
 					filter.Limit)
 			}
 		} else {
 			if filter.Desc == tools.SortParamTrue {
 				rows, err = repository.db.Query(`
 					SELECT id, parent, author, message, isEdited, forum, thread, created FROM post
-					WHERE paths[1] IN (SELECT id FROM post WHERE thread = (SELECT id from thread where slug = $1) 
+					WHERE paths[1] IN (SELECT id FROM post WHERE thread = $1 
 					AND parent = 0 AND paths[1] <
 					(SELECT paths[1] FROM post WHERE id = $2) ORDER BY id DESC LIMIT $3)
 					ORDER BY paths[1] DESC, paths ASC, id ASC;`,
-					slugOrId,
+					tmpId,
 					filter.Since,
 					filter.Limit)
 			} else {
 				rows, err = repository.db.Query(`
 					SELECT id, parent, author, message, isEdited, forum, thread, created FROM post
-					WHERE paths[1] IN (SELECT id FROM post WHERE thread = (SELECT id from thread where slug = $1) 
+					WHERE paths[1] IN (SELECT id FROM post WHERE thread = $1
 					AND parent = 0 AND paths[1] >
 					(SELECT paths[1] FROM post WHERE id = $2) ORDER BY id ASC LIMIT $3) 
 					ORDER BY paths ASC, id ASC;`,
-					slugOrId,
+					tmpId,
 					filter.Since,
 					filter.Limit)
 			}
@@ -453,7 +462,7 @@ func (repository *Repository)GetPostsParentTreeSlugOrId(slugOrId string, filter 
 	return result, err
 }
 
-func (repository *Repository)UpdateThread(slugOrId string, thread models.Thread) (models.Thread, error) {
+func (repository *Repository) UpdateThread(slugOrId string, thread models.Thread) (models.Thread, error) {
 	var row *sql.Row
 	var err error
 	id, err := strconv.Atoi(slugOrId)
@@ -491,25 +500,25 @@ func (repository *Repository)UpdateThread(slugOrId string, thread models.Thread)
 	return thread, nil
 }
 
-func (repository *Repository) GetPostById (id int)(models.Post, error) {
+func (repository *Repository) GetPostById(id int) (models.Post, error) {
 	var result models.Post
-	row := repository.db.QueryRow("SELECT id, parent, author, message, isEdited, " +
+	row := repository.db.QueryRow("SELECT id, parent, author, message, isEdited, "+
 		"forum, thread, created "+
 		"FROM post WHERE id=$1", id)
 
 	err := row.Scan(&result.Id, &result.Parent, &result.Author, &result.Message, &result.IsEdited,
-					&result.Forum, &result.Thread, &result.Created)
+		&result.Forum, &result.Thread, &result.Created)
 	if err != nil {
 		return models.Post{}, err
 	}
 	return result, nil
 }
 
-func(repository *Repository)UpdatePost(id int, post models.Post)(models.Post, error) {
+func (repository *Repository) UpdatePost(id int, post models.Post) (models.Post, error) {
 	query := repository.db.QueryRow("UPDATE post SET "+
 		"message=$1, "+
 		"isedited= case when message = $1 then isedited else true end "+
-		"where id=$2 " +
+		"where id=$2 "+
 		"returning id, parent, author, message, isedited, forum, thread, created",
 		post.Message, id)
 
@@ -522,7 +531,7 @@ func(repository *Repository)UpdatePost(id int, post models.Post)(models.Post, er
 		&post.Forum,
 		&post.Thread,
 		&post.Created,
-		)
+	)
 	if err != nil {
 		return models.Post{}, err
 	}
