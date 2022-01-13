@@ -177,9 +177,7 @@ CREATE TRIGGER after_insert_thread
 CREATE INDEX IF NOT EXISTS users_nickname ON users USING hash (nickname);
 CREATE INDEX IF NOT EXISTS users_email ON users USING hash (email);
 
-
 CREATE INDEX IF NOT EXISTS forum_slug ON forum USING hash (slug);
-
 
 CREATE INDEX IF NOT EXISTS thread_slug ON thread USING hash (slug);
 CREATE INDEX IF NOT EXISTS thread_forum ON thread USING hash (forum);
@@ -187,17 +185,12 @@ CREATE INDEX IF NOT EXISTS thread_created ON thread (created);
 CREATE INDEX IF NOT EXISTS thread_forum_created ON thread (forum, created);
 
 
---CREATE INDEX IF NOT EXISTS post_id_path1 on post (id, (paths[1]));
+CREATE INDEX IF NOT EXISTS post_id_path1 on post (id, (paths[1]));
 CREATE INDEX IF NOT EXISTS post_path1 on post ((paths[1]));
 CREATE INDEX IF NOT EXISTS post_thread ON post (thread);
-
---CREATE INDEX IF NOT EXISTS post_thread_id on post (thread, id);
-
+CREATE INDEX IF NOT EXISTS post_thread_id on post (thread, id);
 CREATE INDEX IF NOT EXISTS post_thread_path_id on post (thread, paths, id);
-
 CREATE INDEX IF NOT EXISTS post_thread_id_path1_parent on post (thread, id, (paths[1]), parent);
---CREATE INDEX IF NOT EXISTS post_path1_path_id ON post ((paths[1]) DESC, paths, id);
-
 
 CREATE UNIQUE INDEX IF NOT EXISTS votes_nickname_thread_nickname_unique on vote (thread, nickname);
 
@@ -205,11 +198,9 @@ create index if not exists users_forum_nickname_slug on users_forum(nickname, sl
 create index if not exists users_forum_nickname on users_forum(nickname);
 create index if not exists users_forum_slug on users_forum(slug);
 
-CREATE UNIQUE INDEX IF NOT EXISTS votes_nickname_thread_nickname_unique on vote (thread, nickname);
+analyse thread;
+analyse post;
 
-create index if not exists users_forum_nickname_slug on users_forum(nickname, slug);
-create index if not exists users_forum_nickname on users_forum(nickname);
-create index if not exists users_forum_slug on users_forum(slug);
 
 
 
