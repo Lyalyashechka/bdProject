@@ -191,6 +191,7 @@ CREATE INDEX IF NOT EXISTS post_thread ON post (thread);
 CREATE INDEX IF NOT EXISTS post_thread_id on post (thread, id);
 CREATE INDEX IF NOT EXISTS post_thread_path_id on post (thread, paths, id);
 CREATE INDEX IF NOT EXISTS post_thread_id_path1_parent on post (thread, id, (paths[1]), parent);
+CREATE INDEX IF NOT EXISTS post_path1_paths_id on post ((paths[1]), paths, id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS votes_nickname_thread_nickname_unique on vote (thread, nickname);
 
@@ -198,9 +199,8 @@ create index if not exists users_forum_nickname_slug on users_forum(nickname, sl
 create index if not exists users_forum_nickname on users_forum(nickname);
 create index if not exists users_forum_slug on users_forum(slug);
 
-analyse thread;
-analyse post;
-
+VACUUM;
+VACUUM ANALYSE;
 
 
 
