@@ -29,4 +29,4 @@ COPY --from=build /app/main/ .
 
 EXPOSE 5000
 ENV PGPASSWORD docker
-CMD service postgresql start && psql -h localhost -d eugeniy -U eugeniy -p 5432 -a -q -f ./init.sql && ./main
+CMD service postgresql start && psql -h localhost -d eugeniy -U eugeniy -p 5432 -a -q -f ./db/db.sql && ./main
