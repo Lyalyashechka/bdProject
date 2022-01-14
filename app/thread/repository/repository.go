@@ -60,8 +60,8 @@ func (repository *Repository) CreatePosts(threadId int, threadForum string, post
 
 func (repository *Repository) GetThreadBySlug(slug string) (models.Thread, error) {
 	var result models.Thread
-	row := repository.db.QueryRow("SELECT id, title, author, forum, message, votes, slug, created "+
-		"FROM thread WHERE slug=$1", slug)
+	row := repository.db.QueryRow(`SELECT id, title, author, forum, message, votes, slug, created 
+		FROM thread WHERE slug=$1`, slug)
 
 	err := row.Scan(&result.Id, &result.Title, &result.Author, &result.Forum, &result.Message, &result.Votes,
 		&result.Slug, &result.Created)
@@ -74,8 +74,8 @@ func (repository *Repository) GetThreadBySlug(slug string) (models.Thread, error
 
 func (repository *Repository) GetThreadById(id int) (models.Thread, error) {
 	var result models.Thread
-	row := repository.db.QueryRow("SELECT id, title, author, forum, message, votes, slug, created "+
-		"FROM thread WHERE id=$1", id)
+	row := repository.db.QueryRow(`SELECT id, title, author, forum, message, votes, slug, created 
+		FROM thread WHERE id=$1`, id)
 	var nullSlug sql.NullString
 	err := row.Scan(&result.Id, &result.Title, &result.Author, &result.Forum, &result.Message, &result.Votes,
 		&nullSlug, &result.Created)
@@ -159,11 +159,11 @@ func (repository *Repository) GetThreadBySlugOrId(slugOrId string) (models.Threa
 	var row *pgx.Row
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
-		row = repository.db.QueryRow("SELECT id, title, author, forum, message, votes, slug, created "+
-			"FROM thread WHERE slug=$1", slugOrId)
+		row = repository.db.QueryRow(`SELECT id, title, author, forum, message, votes, slug, created 
+			FROM thread WHERE slug=$1`, slugOrId)
 	} else {
-		row = repository.db.QueryRow("SELECT id, title, author, forum, message, votes, slug, created "+
-			"FROM thread WHERE id=$1", id)
+		row = repository.db.QueryRow(`SELECT id, title, author, forum, message, votes, slug, created 
+			FROM thread WHERE id=$1`, id)
 	}
 	var nullSlug sql.NullString
 	err = row.Scan(&result.Id, &result.Title, &result.Author, &result.Forum, &result.Message, &result.Votes,
@@ -182,7 +182,7 @@ func (repository *Repository) GetPostsFlatSlugOrId(slugOrId string, filter tools
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
 		var tmpId sql.NullInt64
-		row := repository.db.QueryRow("select id from thread where slug = $1", slugOrId)
+		row := repository.db.QueryRow(`select id from thread where slug = $1`, slugOrId)
 		err = row.Scan(&tmpId)
 		if filter.Since == tools.SinceParamDefault {
 			rows, err = repository.db.Query(`
@@ -468,20 +468,20 @@ func (repository *Repository) UpdateThread(slugOrId string, thread models.Thread
 	var err error
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
-		row = repository.db.QueryRow("UPDATE thread SET "+
-			"title=COALESCE(NULLIF($1, ''), title), "+
-			"author=COALESCE(NULLIF($2, ''), author), "+
-			"forum=COALESCE(NULLIF($3, ''), forum), "+
-			"message=COALESCE(NULLIF($4, ''), message) "+
-			"where slug=$5 returning id, title, author, forum, message, votes, slug, created",
+		row = repository.db.QueryRow(`UPDATE thread SET 
+			title=COALESCE(NULLIF($1, ''), title), 
+			author=COALESCE(NULLIF($2, ''), author), 
+			forum=COALESCE(NULLIF($3, ''), forum), 
+			message=COALESCE(NULLIF($4, ''), message) 
+			where slug=$5 returning id, title, author, forum, message, votes, slug, created`,
 			thread.Title, thread.Author, thread.Forum, thread.Message, slugOrId)
 	} else {
-		row = repository.db.QueryRow("UPDATE thread SET "+
-			"title=COALESCE(NULLIF($1, ''), title), "+
-			"author=COALESCE(NULLIF($2, ''), author), "+
-			"forum=COALESCE(NULLIF($3, ''), forum), "+
-			"message=COALESCE(NULLIF($4, ''), message) "+
-			"where id=$5 returning id, title, author, forum, message, votes, slug, created",
+		row = repository.db.QueryRow(`UPDATE thread SET 
+			title=COALESCE(NULLIF($1, ''), title), 
+			author=COALESCE(NULLIF($2, ''), author), 
+			forum=COALESCE(NULLIF($3, ''), forum),
+			message=COALESCE(NULLIF($4, ''), message) 
+			where id=$5 returning id, title, author, forum, message, votes, slug, created`,
 			thread.Title, thread.Author, thread.Forum, thread.Message, id)
 	}
 
@@ -503,9 +503,9 @@ func (repository *Repository) UpdateThread(slugOrId string, thread models.Thread
 
 func (repository *Repository) GetPostById(id int) (models.Post, error) {
 	var result models.Post
-	row := repository.db.QueryRow("SELECT id, parent, author, message, isEdited, "+
-		"forum, thread, created "+
-		"FROM post WHERE id=$1", id)
+	row := repository.db.QueryRow(`SELECT id, parent, author, message, isEdited,
+		forum, thread, created 
+		FROM post WHERE id=$1`, id)
 
 	err := row.Scan(&result.Id, &result.Parent, &result.Author, &result.Message, &result.IsEdited,
 		&result.Forum, &result.Thread, &result.Created)
@@ -516,11 +516,11 @@ func (repository *Repository) GetPostById(id int) (models.Post, error) {
 }
 
 func (repository *Repository) UpdatePost(id int, post models.Post) (models.Post, error) {
-	query := repository.db.QueryRow("UPDATE post SET "+
-		"message=$1, "+
-		"isedited= case when message = $1 then isedited else true end "+
-		"where id=$2 "+
-		"returning id, parent, author, message, isedited, forum, thread, created",
+	query := repository.db.QueryRow(`UPDATE post SET
+		message=$1,
+		isedited= case when message = $1 then isedited else true end 
+		where id=$2 
+		returning id, parent, author, message, isedited, forum, thread, created`,
 		post.Message, id)
 
 	err := query.Scan(
