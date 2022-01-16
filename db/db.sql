@@ -198,7 +198,8 @@ CREATE INDEX IF NOT EXISTS idx_users_forum_nickname ON users_forum(nickname);
 CREATE INDEX IF NOT EXISTS idx_users_forum_slug ON users_forum(slug);
 
 CREATE INDEX IF NOT EXISTS idx_post_thread_paths_id ON post (thread, paths, id);
-CREATE INDEX IF NOT EXISTS idx_post_thread_id_paths1_parent ON post (thread, id, (paths[1]), parent);
+CREATE INDEX IF NOT EXISTS idx_post_thread_id_paths1_parent ON post (thread, (paths[1]), parent);
+create index if not exists idx_paths1_id on post ((paths[1]), id);
 CREATE INDEX IF NOT EXISTS idx_post_paths1_paths_id ON post ((paths[1]), paths, id);
 
 VACUUM;
